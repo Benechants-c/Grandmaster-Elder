@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grandmaster Elder - Movie Maker</title>
+<style>
+*{box-sizing:border-box;font-family:system-ui}body{margin:0;background:#0b0b12;color:#fff}
+header{padding:16px;font-weight:800;font-size:20px}header span{color:#f5a623}
+.card{background:#171724;border-radius:16px;padding:16px;margin:12px}
+input,select,textarea{width:100%;padding:12px;border-radius:10px;border:1px solid #333;background:#0f0f18;color:#fff;margin:8px 0}
+button{background:#f5a623;border:0;padding:14px;border-radius:12px;font-weight:800;width:100%;cursor:pointer}
+button:disabled{opacity:.4}.scene{display:flex;gap:10px;background:#222236;padding:10px;border-radius:12px;margin:8px 0}
+.scene img{width:90px;height:60px;object-fit:cover;border-radius:8px}
+.badge{background:#1e3a1e;color:#7dff8a;padding:4px 8px;border-radius:20px;font-size:12px}
+small{color:#aaa}.tabs{display:flex;gap:8px;padding:0 12px}.tabs button{background:#222236;color:#fff}
+.tabs button.active{background:#f5a623;color:#000}
+</style>
+</head>
+<body>
+<header>👑 Grandmaster Elder <span>• Movie Maker</span></header>
+
+<div class="tabs">
+<button class="active" onclick="show('lock')">1. Lock Face</button>
+<button onclick="show('gen')">2. Generate</button>
+<button onclick="show('merge')">3. Merge</button>
+</div>
+
+<!-- LOCK -->
+<div id="lock" class="card">
+<h3>🔒 Character Lock - ZWE 🇿🇼</h3>
+<p>Upload your real photo. This face is used in EVERY scene.</p>
+<input type="file" id="faceInput" accept="image/*">
+<img id="facePreview" style="width:100%;border-radius:12px;display:none">
+<p><span class="badge" id="lockStatus">Not Locked</span></p>
+<button onclick="lockFace()">Lock Face</button>
+<p><small>Your locked face: same face, same age, same beard. No older, no grey.</small></p>
+</div>
+
+<!-- GENERATE -->
+<div id="gen" class="card" style="display:none">
+<h3>✨ Generate Scene</h3>
+<textarea id="prompt" rows="3">Elder in Goma disaster, volcano erupting, buildings burning, holding radio, Zimbabwe flag patch, combat boots</textarea>
+<select id="style"><option>Real 3D</option><option>Cinematic</option><option>Cartoon</option></select>
+<select id="voice"><option>Shona</option><option>English</option><option>Ndebele</option></select>
+<label>Duration (Min 30s): <b id="durLabel">30s</b></label>
+<input type="range" id="duration" min="30" max="120" value="30" oninput="document.getElementById('durLabel').innerText=this.value+'s'">
+<p id="warn" style="color:#ff6b6b"></p>
+<button onclick="generateScene()">Generate Scene</button>
+<div id="preview"></div>
+</div>
+
+<!-- MERGE -->
+<div id="merge" class="card" style="display:none">
+<h3>🎬 Movie Merge</h3>
+<p>Total: <b id="total">0s</b> • Scenes: <b id="count">0</b></p>
+<div id="timeline"></div>
+<button onclick="exportMovie()">Export 1080p Movie</button>
+<p><small>Export blocked if any scene &lt; 30s.</small></p>
+</div>
+
+<script>
+let locked=false, scenes=[];
+let faceURL="";
+
+function show(id){
+  ['lock','gen','merge'].forEach(x=>document.getElementById(x).style.display=x===id?'block':'none');
+  document.querySelectorAll('.tabs button').forEach((b,i)=>b.classList.toggle('active', ['lock','gen','merge'][i]===id));
+}
+document.getElementById('faceInput').onchange=e=>{
+  faceURL=URL.createObjectURL(e.target.files[0]);
+  let p=document.getElementById('facePreview'); p.src=faceURL; p.style.display='block';
+};
+function lockFace(){
+  if(!faceURL) return alert('Upload your photo first');
+  locked=true; document.getElementById('lockStatus').innerText='✅ LOCKED - Your Face';
+  alert('Locked! Your exact face will be used in all scenes.');
+  show('gen');
+}
+function generateScene(){
+  if(!locked) return alert('Lock your face first!');
+  let dur=parseInt(document.getElementById('duration').value);
+  if(dur<30){ document.getElementById('warn').innerText='Shortest scene is 30s!'; return; }
+  let prompt=document.getElementById('prompt').value;
+  let style=document.getElementById('style').value;
+  let voice=document.getElementById('voice').value;
+  // In real app: call AI image/video API here with faceURL + prompt
+  let scene={prompt,style,voice,dur,img:faceURL||'https://picsum.photos/300/200'};
+  scenes.push(scene);
+  document.getElementById('preview').innerHTML=`<div class="scene"><img src="${scene.img}"><div><b>${dur}s • ${style} • ${voice}</b><br><small>${prompt}</small></div></div><button onclick="addToTimeline()">+ Add to Movie</button>`;
+  alert(`Scene generated: ${dur}s - ready to merge`);
+}
+function addToTimeline(){ render(); show('merge'); }
+function render(){
+  let total=scenes.reduce((a,s)=>a+s.dur,0);
+  document.getElementById('total').innerText=total+'s';
+  document.getElementById('count').innerText=scenes.length;
+  document.getElementById('timeline').innerHTML=scenes.map((s,i)=>`<div class="scene"><img src="${s.img}"><div><b>Scene ${i+1} • ${s.dur}s</b><br><small>${s.prompt.slice(0,60)}...</small><br><button style="width:auto;padding:6px 10px;margin-top:6px" onclick="scenes.splice(${i},1);render()">Remove</button></div></div>`).join('');
+}
+function exportMovie(){
+  if(scenes.length===0) return alert('Add scenes first');
+  if(scenes.some(s=>s.dur<30)) return alert('Error: All scenes must be 30s or more');
+  let total=scenes.reduce((a,s)=>a+s.dur,0);
+  alert(`Exporting Grandmaster Elder Movie\n${scenes.length} scenes • ${total}s • 1080p • 24fps\nYour face locked in all scenes.`);
+}
+</script>
+</body>
+</html>
