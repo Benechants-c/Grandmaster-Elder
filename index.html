@@ -1,106 +1,506 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>GRANDMASTER - Real Movie Maker</title>
-<style>
-body{background:#111;color:#fff;font-family:Arial;padding:15px;text-align:center}
-input,textarea{width:95%;padding:12px;margin:8px 0;border-radius:10px;border:0;font-size:16px}
-button{background:#FFD700;color:#000;padding:14px 20px;border:0;border-radius:12px;font-weight:bold;font-size:16px;margin:6px;width:95%}
-canvas{width:100%;max-width:640px;border-radius:12px;background:#000}
-img{width:100%;max-width:640px;border-radius:12px}
-#status{color:#FFD700;margin:10px}
-</style>
-</head>
-<body>
-<h2>🎬 GRANDMASTER ELDER<br>Real Movie Maker</h2>
-<p>1. Write scene &nbsp; 2. Generate Photo &nbsp; 3. Animate to Video</p>
+<!DOCTYPE html>  <html lang="en">  
+<head>  
+<meta charset="UTF-8">  
+<meta name="viewport" content="width=device-width,initial-scale=1">  
+<meta name="theme-color" content="#111111">  
+<title>GRANDMASTER ELDER V2</title>  <style>  
+*{box-sizing:border-box}  
+body{  
+ background:#101010;color:white;font-family:Arial;  
+ margin:0;padding:15px;text-align:center  
+}  
+h1{color:#ffd700;font-size:25px}  
+h2{color:#ffd700}  
+.panel{  
+ background:#202020;border:1px solid #444;  
+ border-radius:15px;padding:15px;margin:12px auto;  
+ max-width:750px;text-align:left  
+}  
+input,textarea,select{  
+ width:100%;padding:13px;margin:7px 0;  
+ border:0;border-radius:9px;font-size:16px;  
+ background:#333;color:white  
+}  
+button{  
+ width:100%;padding:14px;margin:6px 0;  
+ border:0;border-radius:10px;  
+ background:#ffd700;color:#111;  
+ font-size:16px;font-weight:bold  
+}  
+button.secondary{background:#333;color:white;border:1px solid #666}  
+button.danger{background:#a32222;color:white}  
+button:disabled{opacity:.45}  
+canvas,video,img{  
+ width:100%;max-width:720px;  
+ border-radius:12px;background:black  
+}  
+#status{color:#ffd700;font-weight:bold;line-height:1.5}  
+.scene{  
+ background:#292929;padding:12px;border-radius:10px;  
+ margin:10px 0;border:1px solid #555  
+}  
+.scene img{width:100%;margin-top:8px}  
+.small{font-size:12px;color:#aaa}  
+.row{display:flex;gap:8px;flex-wrap:wrap}  
+.row button{flex:1;min-width:100px}  
+.gold{color:#ffd700}  
+</style>  </head>  <body>  <h1>🎬 GRANDMASTER ELDER</h1>  
+<p class="gold">V2 — REAL MOTION STUDIO</p>  
+<p>Build cinematic African movies scene by scene.</p>  <div class="panel">  
+<h2>1. CREATE YOUR MOVIE</h2>  <label>Movie title</label>
+<input id="movieTitle" value="THE LAST SURVIVOR">
 
-<textarea id="prompt" rows="3">Elder in Goma disaster, volcano erupting, buildings burning, cinematic realistic movie still</textarea>
-<button onclick="genImage()">1. GENERATE REAL PHOTO</button>
-<p id="status">Ready...</p>
-<img id="photo" style="display:none">
-<canvas id="canvas" width="1280" height="720" style="display:none"></canvas>
-<br>
-<button onclick="previewMotion()">2. PREVIEW MOTION</button>
-<button onclick="exportVideo()">3. EXPORT REAL VIDEO FILE</button>
-<video id="result" controls style="display:none;width:100%;max-width:640px;margin-top:10px"></video>
-<a id="download" style="display:none"><button>DOWNLOAD VIDEO</button></a>
+<label>Movie language</label>
+<select id="language">
 
-<script>
-let img = new Image();
-img.crossOrigin = "anonymous";
-let animId;
-let isRecording = false;
+<option value="en-US">English</option>  
+<option value="sn">Shona (if supported by device)</option>  
+</select>  <label>Movie length</label>
+<select id="movieLength">
 
-function genImage(){
-  let p = document.getElementById('prompt').value;
-  document.getElementById('status').innerText = "Generating real photo... wait 10-20s";
-  let url = "https://image.pollinations.ai/prompt/" + encodeURIComponent(p + ", cinematic, realistic, 1080p movie still") + "?width=1280&height=720&seed=" + Math.floor(Math.random()*99999) + "&nologo=true";
-  img.onload = ()=>{
-    document.getElementById('photo').src = url;
-    document.getElementById('photo').style.display = "block";
-    document.getElementById('status').innerText = "✅ Photo generated! Now tap Preview Motion";
-  };
-  img.onerror = ()=>{ document.getElementById('status').innerText = "Network slow, tap Generate again"; };
-  img.src = url;
-}
+<option value="5">5 minutes</option>  
+<option value="10">10 minutes</option>  
+<option value="15">15 minutes</option>  
+<option value="20">20 minutes</option>  
+</select>  <label>Describe your story</label>
 
-function drawFrame(t){
-  let canvas = document.getElementById('canvas');
-  let ctx = canvas.getContext('2d');
-  canvas.style.display = "block";
-  // Ken Burns: slow zoom in + slight pan = movie camera movement
-  let zoom = 1.0 + (t * 0.00008); // slow zoom
-  let w = 1280 * zoom;
-  let h = 720 * zoom;
-  let x = (1280 - w)/2 + Math.sin(t*0.0002)*20;
-  let y = (720 - h)/2;
-  ctx.fillStyle = "#000"; ctx.fillRect(0,0,1280,720);
-  if(img.complete && img.naturalWidth>0){
-    ctx.drawImage(img, x, y, w, h);
-  }
-  // Subtitle / cinematic bars
-  ctx.fillStyle = "rgba(0,0,0,0.7)"; ctx.fillRect(0,0,1280,60); ctx.fillRect(0,660,1280,60);
-  ctx.fillStyle = "#fff"; ctx.font = "bold 32px Arial"; ctx.textAlign = "center";
-  ctx.fillText(document.getElementById('prompt').value.substring(0,60), 640, 700);
-  // Shake for disaster feel
-  if(Math.random()>0.97){ ctx.translate(Math.random()*4, Math.random()*4); }
-}
+<textarea id="story" rows="4">A brave African man struggles to save his family during a dangerous volcanic eruption. He travels through burning streets, rescues survivors and fights to reach safety.</textarea>  <button onclick="createStory()">CREATE SCENES FROM STORY</button>
 
-function previewMotion(){
-  if(!img.src){ alert("Generate photo first"); return; }
-  document.getElementById('status').innerText = "▶️ Previewing motion - this is how your video will look";
-  cancelAnimationFrame(animId);
-  let start = performance.now();
-  function loop(now){ drawFrame(now-start); animId = requestAnimationFrame(loop); }
-  animId = requestAnimationFrame(loop);
-}
+</div>  <div class="panel">  
+<h2>2. SCENE MANAGER</h2>  
+<div id="scenes"></div>  <button onclick="addScene()">＋ ADD NEW SCENE</button>
+<button onclick="generateAll()">GENERATE ALL SCENE PHOTOS</button>
 
-function exportVideo(){
-  if(!img.src){ alert("Generate photo first"); return; }
-  cancelAnimationFrame(animId);
-  document.getElementById('status').innerText = "🔴 RECORDING REAL VIDEO... 10 seconds, don't close";
-  let canvas = document.getElementById('canvas');
-  canvas.style.display = "block";
-  let stream = canvas.captureStream(30);
-  let chunks = [];
-  let rec = new MediaRecorder(stream, {mimeType:'video/webm'});
-  rec.ondataavailable = e=>{ if(e.data.size>0) chunks.push(e.data); };
-  rec.onstop = ()=>{
-    let blob = new Blob(chunks, {type:'video/webm'});
-    let url = URL.createObjectURL(blob);
-    let v = document.getElementById('result');
-    v.src = url; v.style.display = "block";
-    let a = document.getElementById('download');
-    a.href = url; a.download = "Grandmaster-Elder-Goma.mp4"; a.style.display = "block";
-    document.getElementById('status').innerText = "✅ DONE! Real video file created. Tap DOWNLOAD VIDEO";
-  };
-  rec.start();
-  let start = performance.now();
-  function loop(now){ drawFrame(now-start); if(now-start < 10000){ animId = requestAnimationFrame(loop); } else { rec.stop(); cancelAnimationFrame(animId); } }
-  animId = requestAnimationFrame(loop);
-}
-</script>
-</body>
-</html>
+</div>  <div class="panel">  
+<h2>3. SELECTED SCENE</h2>  <label>Scene description</label>
+
+<textarea id="prompt" rows="4">African man running through a dangerous volcanic disaster, realistic African actor, cinematic Hollywood movie still, dramatic lighting, detailed environment, 16:9</textarea>  <label>Scene dialogue / narration</label>
+
+<textarea id="dialogue" rows="3">We must survive. My family is waiting for me!</textarea>  <div class="row">  
+<button onclick="generatePhoto()">GENERATE PHOTO</button>  
+<button class="secondary" onclick="speakDialogue()">TEST VOICE</button>  
+</div>  <p id="status">Ready to create your movie.</p>  <img id="photo" style="display:none">  </div>  <div class="panel">  
+<h2>4. MOTION ENGINE</h2>  <p class="small">  
+Animated camera movement, atmospheric effects, fire, smoke,  
+particles and cinematic transitions.  
+</p>  <label>Motion style</label>
+<select id="motion">
+
+<option value="cinematic">Cinematic camera movement</option>  
+<option value="disaster">Disaster / earthquake</option>  
+<option value="action">Action / intense movement</option>  
+<option value="slow">Slow dramatic movement</option>  
+<option value="storm">Storm / wind</option>  
+</select>  <label>Scene duration</label>
+<select id="duration">
+
+<option value="6">6 seconds</option>  
+<option value="10">10 seconds</option>  
+<option value="15">15 seconds</option>  
+<option value="20">20 seconds</option>  
+</select>  <button onclick="previewMotion()">▶ PREVIEW MOTION</button>
+
+<canvas id="canvas" width="1280" height="720"></canvas>
+
+</div>  <div class="panel">  
+<h2>5. EXPORT YOUR MOVIE</h2>  <p class="small">  
+The export combines your generated scenes into one WebM video.  
+Longer films can be assembled by exporting short sequences  
+and combining them in a video editor.  
+</p>  <button onclick="exportMovie()">🎥 EXPORT COMPLETE MOVIE</button>
+
+<video id="result" controls style="display:none"></video>
+
+<a id="download" style="display:none" download="Grandmaster-Elder.webm">  
+<button>⬇ DOWNLOAD YOUR MOVIE</button>  
+</a>  </div>  <div class="panel">  
+<h2>6. FUTURE AI VIDEO ENGINE</h2>  
+<p>  
+This section is reserved for connecting a genuine AI  
+image-to-video service that can animate actors, facial  
+expressions, walking, fighting and other physical actions.  
+</p>  
+<p class="gold">Real AI video generation requires a compatible service.</p>  
+</div>  <script>  
+let scenes = [];  
+let selected = 0;  
+let currentImage = new Image();  
+let animation = null;  
+let recording = false;  
+let videoUrl = null;  
+  
+const canvas = document.getElementById("canvas");  
+const ctx = canvas.getContext("2d");  
+  
+function addScene(description="", dialogue=""){  
+ scenes.push({  
+  prompt: description || "Cinematic African movie scene, realistic actors, dramatic lighting, 16:9",  
+  dialogue: dialogue,  
+  image:null  
+ });  
+ selected = scenes.length-1;  
+ renderScenes();  
+ loadSelected();  
+}  
+  
+function renderScenes(){  
+ const box = document.getElementById("scenes");  
+ box.innerHTML="";  
+  
+ scenes.forEach((s,i)=>{  
+  const div=document.createElement("div");  
+  div.className="scene";  
+  
+  const title=document.createElement("b");  
+  title.textContent="SCENE "+(i+1)+(s.image?" ✓":"");  
+  
+  const select=document.createElement("button");  
+  select.className="secondary";  
+  select.textContent="EDIT THIS SCENE";  
+  select.onclick=()=>selectScene(i);  
+  
+  const remove=document.createElement("button");  
+  remove.className="danger";  
+  remove.textContent="DELETE SCENE";  
+  remove.onclick=()=>{  
+   if(scenes.length===1){alert("Keep at least one scene.");return;}  
+   scenes.splice(i,1);  
+   selected=Math.min(selected,scenes.length-1);  
+   renderScenes();  
+   loadSelected();  
+  };  
+  
+  div.append(title,select,remove);  
+  box.appendChild(div);  
+ });  
+}  
+  
+function selectScene(i){  
+ saveSelected();  
+ selected=i;  
+ loadSelected();  
+ renderScenes();  
+}  
+  
+function saveSelected(){  
+ if(!scenes[selected])return;  
+ scenes[selected].prompt=document.getElementById("prompt").value;  
+ scenes[selected].dialogue=document.getElementById("dialogue").value;  
+}  
+  
+function loadSelected(){  
+ const s=scenes[selected];  
+ if(!s)return;  
+  
+ document.getElementById("prompt").value=s.prompt;  
+ document.getElementById("dialogue").value=s.dialogue;  
+  
+ if(s.image){  
+  currentImage=s.image;  
+  showPhoto(s.image.src);  
+ }else{  
+  currentImage=new Image();  
+  document.getElementById("photo").style.display="none";  
+ }  
+}  
+  
+function createStory(){  
+ const story=document.getElementById("story").value.trim();  
+ if(!story){alert("Write your story first.");return;}  
+  
+ scenes=[  
+  {prompt:"Wide cinematic establishing shot: "+story+", realistic African cinema",dialogue:"This is where our story begins.",image:null},  
+  {prompt:"Close-up of the main African character facing danger: "+story+", realistic movie still",dialogue:"Something terrible is happening.",image:null},  
+  {prompt:"African hero running through a dangerous environment: "+story+", cinematic action scene",dialogue:"We have to keep moving!",image:null},  
+  {prompt:"Emotional rescue scene with African characters: "+story+", realistic cinematic photography",dialogue:"I will not leave anyone behind.",image:null},  
+  {prompt:"Epic final scene with survivors reaching safety: "+story+", Hollywood movie ending",dialogue:"We survived. Our story is not over.",image:null}  
+ ];  
+  
+ selected=0;  
+ renderScenes();  
+ loadSelected();  
+ document.getElementById("status").textContent="5 story scenes created. Generate their photos.";  
+}  
+  
+function showPhoto(src){  
+ const p=document.getElementById("photo");  
+ p.src=src;  
+ p.style.display="block";  
+}  
+  
+function generatePhoto(){  
+ saveSelected();  
+  
+ const prompt=document.getElementById("prompt").value;  
+ const status=document.getElementById("status");  
+  
+ status.textContent="Generating cinematic photo. Please wait...";  
+  
+ const url=  
+ "https://image.pollinations.ai/prompt/"+  
+ encodeURIComponent(prompt+", cinematic realistic Hollywood movie still, detailed African actors, professional film lighting")+  
+ "?width=1280&height=720&seed="+Math.floor(Math.random()*999999)+  
+ "&nologo=true";  
+  
+ const newImage=new Image();  
+ newImage.crossOrigin="anonymous";  
+  
+ newImage.onload=()=>{  
+  scenes[selected].image=newImage;  
+  currentImage=newImage;  
+  showPhoto(newImage.src);  
+  status.textContent="Photo generated successfully!";  
+  renderScenes();  
+ };  
+  
+ newImage.onerror=()=>{  
+  status.textContent="Generation failed or service busy. Check internet and try again.";  
+ };  
+  
+ newImage.src=url;  
+}  
+  
+async function generateAll(){  
+ for(let i=0;i<scenes.length;i++){  
+  selected=i;  
+  loadSelected();  
+  renderScenes();  
+  document.getElementById("status").textContent=  
+   "Generating scene "+(i+1)+" of "+scenes.length;  
+  
+  await new Promise(resolve=>{  
+   const p=scenes[i].prompt;  
+   const url="https://image.pollinations.ai/prompt/"+  
+   encodeURIComponent(p+", realistic cinematic movie still, African actors")+  
+   "?width=1280&height=720&seed="+Math.floor(Math.random()*999999)+"&nologo=true";  
+  
+   const im=new Image();  
+   im.crossOrigin="anonymous";  
+   im.onload=()=>{scenes[i].image=im;resolve();};  
+   im.onerror=()=>resolve();  
+   im.src=url;  
+  });  
+  
+  renderScenes();  
+ }  
+  
+ loadSelected();  
+ document.getElementById("status").textContent=  
+ "Scene generation finished. Check any missing photos.";  
+}  
+  
+function speakDialogue(){  
+ const text=document.getElementById("dialogue").value;  
+  
+ if(!("speechSynthesis" in window)){  
+  alert("Voice playback is not supported on this browser.");  
+  return;  
+ }  
+  
+ speechSynthesis.cancel();  
+  
+ const utterance=new SpeechSynthesisUtterance(text);  
+ utterance.lang=document.getElementById("language").value;  
+ utterance.rate=0.9;  
+  
+ speechSynthesis.speak(utterance);  
+}  
+  
+function drawScene(time){  
+ ctx.fillStyle="#000";  
+ ctx.fillRect(0,0,1280,720);  
+  
+ if(!currentImage.complete || !currentImage.naturalWidth)return;  
+  
+ const style=document.getElementById("motion").value;  
+  
+ let zoom=1.04;  
+ let shake=0;  
+  
+ if(style==="cinematic")zoom=1.04+time*0.000035;  
+ if(style==="slow")zoom=1.02+time*0.000015;  
+ if(style==="disaster"){zoom=1.08;shake=5;}  
+ if(style==="action"){zoom=1.10;shake=9;}  
+ if(style==="storm"){zoom=1.06;shake=3;}  
+  
+ const w=1280*zoom;  
+ const h=720*zoom;  
+  
+ const movement=Math.sin(time*0.001)*18;  
+ const sx=(1280-w)/2+movement+(Math.random()-.5)*shake;  
+ const sy=(720-h)/2+(Math.random()-.5)*shake;  
+  
+ ctx.save();  
+ ctx.drawImage(currentImage,sx,sy,w,h);  
+ ctx.restore();  
+  
+ // Atmospheric particles  
+ if(style==="disaster" || style==="storm" || style==="action"){  
+  for(let i=0;i<45;i++){  
+   let x=(i*173+time*0.08)%1280;  
+   let y=(i*97+time*0.13)%720;  
+  
+   ctx.fillStyle=style==="disaster"?  
+   "rgba(255,150,40,.55)":"rgba(220,220,220,.35)";  
+  
+   ctx.beginPath();  
+   ctx.arc(x,y,2+(i%3),0,Math.PI*2);  
+   ctx.fill();  
+  }  
+ }  
+  
+ // Cinematic bars  
+ ctx.fillStyle="rgba(0,0,0,.75)";  
+ ctx.fillRect(0,0,1280,55);  
+ ctx.fillRect(0,665,1280,55);  
+  
+ // Movie title  
+ ctx.fillStyle="#ffd700";  
+ ctx.font="bold 27px Arial";  
+ ctx.textAlign="left";  
+ ctx.fillText(document.getElementById("movieTitle").value.substring(0,45),35,38);  
+  
+ // Subtitle  
+ ctx.fillStyle="white";  
+ ctx.font="bold 28px Arial";  
+ ctx.textAlign="center";  
+ const subtitle=scenes[selected]?.dialogue||"";  
+ ctx.fillText(subtitle.substring(0,75),640,704);  
+}  
+  
+function previewMotion(){  
+ saveSelected();  
+  
+ if(!scenes[selected].image){  
+  alert("Generate a photo for this scene first.");  
+  return;  
+ }  
+  
+ cancelAnimationFrame(animation);  
+ const start=performance.now();  
+  
+ function loop(now){  
+  drawScene(now-start);  
+  animation=requestAnimationFrame(loop);  
+ }  
+  
+ animation=requestAnimationFrame(loop);  
+ document.getElementById("status").textContent="Previewing cinematic motion.";  
+}  
+  
+function loadSceneForExport(index){  
+ selected=index;  
+ currentImage=scenes[index].image;  
+}  
+  
+function exportMovie(){  
+ saveSelected();  
+  
+ if(!scenes.some(s=>s.image)){  
+  alert("Generate at least one scene photo first.");  
+  return;  
+ }  
+  
+ if(!window.MediaRecorder || !canvas.captureStream){  
+  alert("Your browser does not support video recording. Try Chrome.");  
+  return;  
+ }  
+  
+ const mimeTypes=[  
+  "video/webm;codecs=vp9",  
+  "video/webm;codecs=vp8",  
+  "video/webm"  
+ ];  
+  
+ const mime=mimeTypes.find(t=>MediaRecorder.isTypeSupported(t));  
+  
+ if(!mime){  
+  alert("Video recording format is not supported on this browser.");  
+  return;  
+ }  
+  
+ cancelAnimationFrame(animation);  
+  
+ const stream=canvas.captureStream(30);  
+ const chunks=[];  
+ const recorder=new MediaRecorder(stream,{mimeType:mime});  
+  
+ recorder.ondataavailable=e=>{  
+  if(e.data.size)chunks.push(e.data);  
+ };  
+  
+ recorder.onstop=()=>{  
+  const blob=new Blob(chunks,{type:mime});  
+  if(videoUrl)URL.revokeObjectURL(videoUrl);  
+  videoUrl=URL.createObjectURL(blob);  
+  
+  const video=document.getElementById("result");  
+  video.src=videoUrl;  
+  video.style.display="block";  
+  
+  const link=document.getElementById("download");  
+  link.href=videoUrl;  
+  link.download="Grandmaster-Elder.webm";  
+  link.style.display="block";  
+  
+  document.getElementById("status").textContent=  
+  "Movie recording completed! Download your WebM video.";  
+  
+  stream.getTracks().forEach(t=>t.stop());  
+  recording=false;  
+ };  
+  
+ recorder.start(500);  
+ recording=true;  
+  
+ const activeScenes=scenes.filter(s=>s.image);  
+ const seconds=Number(document.getElementById("duration").value);  
+ const total=activeScenes.length*seconds;  
+ let index=0;  
+ let sceneStart=performance.now();  
+  
+ loadSceneForExport(activeScenes[0]);  
+  
+ document.getElementById("status").textContent=  
+ "Recording movie: 0%";  
+  
+ function render(now){  
+  const elapsed=(now-sceneStart)/1000;  
+  
+  if(elapsed>=seconds){  
+   index++;  
+  
+   if(index>=activeScenes.length){  
+    drawScene(seconds*1000);  
+    recorder.stop();  
+    cancelAnimationFrame(animation);  
+    return;  
+   }  
+  
+   loadSceneForExport(activeScenes[index]);  
+   sceneStart=now;  
+  }  
+  
+  drawScene(now-sceneStart);  
+  
+  const progress=Math.min(100,Math.round(  
+   ((index*seconds+elapsed)/total)*100  
+  ));  
+  
+  document.getElementById("status").textContent=  
+   "Recording movie: "+progress+"%";  
+  
+  animation=requestAnimationFrame(render);  
+ }  
+  
+ animation=requestAnimationFrame(render);  
+}  
+  
+// Initial scene  
+addScene(  
+ "African man standing in a dramatic cinematic disaster environment, realistic African actor, Hollywood lighting, 16:9",  
+ "Our story begins..."  
+);  
+  
+</script>  </body>  
+</html>  
